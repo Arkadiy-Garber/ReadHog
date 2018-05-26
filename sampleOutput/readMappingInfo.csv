@@ -1,4 +1,4 @@
-bin,read_proportion_when_mapped_together,read_proportion_when_mapped_separately,bin_comparison_1,bin_comparison_2,
+bin,reads_mapped_when_mapped_together,reads_mapped_when_mapped_separately,bin_comparison_1,bin_comparison_2,
 metabatBin-superspecific.4.fa.contigs.fa,997893,998537,NA,NA,
 maxbin.011.fasta_sub.contigs.fa,110981,128559,NA,NA,
 metabatBin-superspecific.3.fa.contigs.fa,591039,593187,NA,NA,
