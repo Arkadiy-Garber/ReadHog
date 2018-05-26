@@ -20,4 +20,4 @@ The output will consist of a CSV file in which the number of reads recruited to 
 
 ### Example:
 
-    python3 ReadHog.py -reads_directory reads/ -reads_ext fastq -bin_directory bins/ -bin_ext fasta -output_csv recruitFidel.csv -bin_comparisons some_bins.txt -num_threads 8
+    python3 ReadHog.py -reads_directory reads/ -reads_ext fastq -bin_directory bins/ -bin_ext fasta -output_csv readMappingInfo.csv -bin_comparisons binComparisons.txt -num_threads 8
