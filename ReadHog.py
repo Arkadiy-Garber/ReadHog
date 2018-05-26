@@ -205,9 +205,9 @@ else:
 print("writing final file...")
 out = open(args.output_csv, "w")
 if args.bin_comparisons == "NA":
-    out.write("bin" + "," + "read_proportion_when_mapped_together" + "," + "read_proportion_when_mapped_separately" + "\n")
+    out.write("bin" + "," + "reads_mapped_when_mapped_together" + "," + "reads_mapped_when_mapped_separately" + "\n")
 else:
-    out.write("bin" + "," + "read_proportion_when_mapped_together" + "," + "read_proportion_when_mapped_separately" + ",")
+    out.write("bin" + "," + "reads_mapped_when_mapped_together" + "," + "reads_mapped_when_mapped_separately" + ",")
     for i in CovDictComp.keys():
         out.write(i.split(".")[0] + ",")
     out.write("\n")
