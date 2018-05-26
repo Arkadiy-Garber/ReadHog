@@ -1,2 +1,0 @@
-concoct.34.fa_sub.contigs.fa	concoct.7.fa.contigs.fa
-metabatBin-sensitive.6.fa_sub.contigs.fa	maxbin.005.fasta.contigs.fa	concoct.1.fa_sub.contigs.fa	concoct.7.fa.contigs.fa
