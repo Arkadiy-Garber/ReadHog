@@ -28,6 +28,12 @@ parser.add_argument('-output_csv', help="basename for output file with read mapp
 parser.add_argument('-bin_comparisons', help="tab-delimited file for which combination of bins to map reads to "
                                              "(optional)", default="NA")
 parser.add_argument('-num_threads', help="the number of threads to use (default = 1)", default=1)
+parser.add_argument('-mode', help="paired (if you are providing folder with paired-end reads) or single (if your folder"
+                                  " has only single-end reads (default = single). If you are providing a folder with "
+                                  "paired-end reads, all the forward read files must end with either _1.fq or _1.fastq"
+                                  "and all the reverse end files must end with _2.fq of _2.fastq. All other files that"
+                                  "do not end with _1.fq, _1.fastq, _2.fq, or _2.fastq will be assumed to be unpaired "
+                                  "reads", default="single")
 
 args = parser.parse_args()
 
@@ -40,10 +46,13 @@ def sum(list):
 
 
 def lastItem(iterable):
-    x = ''
-    for i in iterable:
-        x = i
-    return x
+    if len(iterable) > 1:
+        x = ''
+        for i in iterable:
+            x = i
+        return x
+    else:
+        return "unpaired"
 
 
 def fasta(fasta_file):
@@ -67,23 +76,58 @@ def fasta(fasta_file):
 
 print("Concatanating reads...")
 
-outfile = open(args.reads_directory + "/combined_reads.fastq", "w")
-reads = os.listdir(args.reads_directory)
-for i in reads:
-    ext = lastItem(i.split("."))
-    if ext == args.reads_ext and i != "combined_reads.fastq":
-        readFile = open(args.reads_directory + "/" + i, "r")
-        for line in readFile:
-            outfile.write(line)
-outfile.close()
+if args.mode == "single":
+    outfile = open(args.reads_directory + "/combined_reads.fastq", "w")
+    reads = os.listdir(args.reads_directory)
+    for i in reads:
+        ext = lastItem(i.split("."))
+        if ext == args.reads_ext and i != "combined_reads.fastq":
+            readFile = open(args.reads_directory + "/" + i, "r")
+            for line in readFile:
+                outfile.write(line)
+    outfile.close()
 
 
-numReads = 0
-print("Done. Counting reads")
-reads = open(args.reads_directory + "/combined_reads.fastq", "r")
-for i in reads:
-    if re.match(r'^@', i):
-        numReads += 1
+if args.mode == "paired":
+    outfile1 = open(args.reads_directory + "/combined_reads_1.fastq", "w")
+    reads = sorted(os.listdir(args.reads_directory))
+    for i in reads:
+        ext = lastItem(i.split("_"))
+        if re.findall(r'_1', ext) and i != "combined_reads_1.fastq":
+            readFile = open(args.reads_directory + "/" + i, "r")
+            for line in readFile:
+                outfile1.write(line)
+    outfile1.close()
+
+    outfile2 = open(args.reads_directory + "/combined_reads_2.fastq", "w")
+    reads = sorted(os.listdir(args.reads_directory))
+    for i in reads:
+        ext = lastItem(i.split("_"))
+        if re.findall(r'_2', ext) and i != "combined_reads_1.fastq" and i != "combined_reads_2.fastq":
+            readFile = open(args.reads_directory + "/" + i, "r")
+            for line in readFile:
+                outfile2.write(line)
+    outfile2.close()
+
+    outfile = open(args.reads_directory + "/combined_reads_unpaired.fastq", "w")
+    reads = os.listdir(args.reads_directory)
+    for i in reads:
+        ext = lastItem(i.split("_"))
+        if not re.findall(r'_1', ext) and not re.findall(r'_2', ext) and i != "combined_reads_1.fastq" and \
+                        i != "combined_reads_2.fastq" and i != "combined_reads_unpaired.fastq":
+            readFile = open(args.reads_directory + "/" + i, "r")
+            for line in readFile:
+                outfile.write(line)
+    outfile.close()
+
+
+
+# numReads = 0
+# print("Done. Counting reads")
+# reads = open(args.reads_directory + "/combined_reads.fastq", "r")
+# for i in reads:
+#     if re.match(r'^@', i):
+#         numReads += 1
 
 
 print("Concatenating bins...")
@@ -104,9 +148,17 @@ os.system("bowtie2-build --threads " + str(args.num_threads) + " -f " + args.bin
           + args.bin_directory + "/combined_contigs.fasta --quiet")
 
 print("Mapping reads to combined contigs")
-os.system("bowtie2 -t --threads " + str(args.num_threads) + " -x " + args.bin_directory + "/combined_contigs.fasta" + " "
-          "-U " + args.reads_directory + "/combined_reads.fastq" + " "
-          "-S combined_contigs.sam --no-unal --quiet --reorder")
+if args.mode == "single":
+    os.system("bowtie2 -t --threads " + str(args.num_threads) + " -x " + args.bin_directory + "/combined_contigs.fasta"
+              + "-U " + args.reads_directory + "/combined_reads.fastq" + " "
+              "-S combined_contigs.sam --no-unal --quiet --reorder")
+
+if args.mode == "paired":
+    os.system("bowtie2 -t --threads " + str(args.num_threads) + " -x " + args.bin_directory +
+              "/combined_contigs.fasta -1 " + args.reads_directory + "/combined_reads_1.fastq -2 " +
+              args.reads_directory + "/combined_reads_2.fastq -U " + args.reads_directory +
+              "/combined_reads_unpaired.fastq -S combined_contigs.sam --no-unal --quiet --reorder")
+
 
 print("Running SAMtools...")
 os.system("samtools view -bS -o combined_contigs.bam combined_contigs.sam")
@@ -148,9 +200,18 @@ for i in bins:
         os.system("bowtie2-build --threads " + str(args.num_threads) + " -f " + args.bin_directory + "/" + i + " "
                   + args.bin_directory + "/" + i + " --quiet")
         print("Mapping reads to " + i)
-        os.system("bowtie2 -t --threads " + str(args.num_threads) + " -x " + args.bin_directory + "/" + i + " "
-          "-U " + args.reads_directory + "/combined_reads.fastq" + " "
-          "-S " + i + ".sam --no-unal --quiet --reorder")
+
+        if args.mode == "single":
+            os.system("bowtie2 -t --threads " + str(args.num_threads) + " -x " + args.bin_directory + "/" + i + " "
+              "-U " + args.reads_directory + "/combined_reads.fastq" + " "
+              "-S " + i + ".sam --no-unal --quiet --reorder")
+
+        if args.mode == "paired":
+            os.system("bowtie2 -t --threads " + str(args.num_threads) + " -x " + args.bin_directory + "/" + i +
+                      " -1 " + args.reads_directory + "/combined_reads_1.fastq -2 " + args.reads_directory +
+                      "/combined_reads_2.fastq -U " + args.reads_directory + "/combined_reads_unpaired.fastq -S " + i +
+                      ".sam --no-unal --quiet --reorder")
+
         os.system("samtools view -bS -o " + i + ".bam " + i + ".sam")
         os.system("samtools sort -@ " + args.num_threads + " -o " + i + ".bam.sorted " + i + ".bam")
         os.system("samtools index -b " + i + ".bam.sorted " + i + ".bam.sorted.bai")
@@ -185,8 +246,16 @@ else:
                     BINDICT[header] = bin
         os.system("bowtie2-build --threads " + str(args.num_threads) + " -f " + args.bin_directory + "/" + string + " "
                   + args.bin_directory + "/" + string + " --quiet")
-        os.system("bowtie2 -t --threads " + str(args.num_threads) + " -x " + args.bin_directory + "/" + string + " -U "
-                  + args.reads_directory + "/combined_reads.fastq" + " -S " + string + ".sam --no-unal --quiet --reorder")
+        if args.mode == "single":
+            os.system("bowtie2 -t --threads " + str(args.num_threads) + " -x " + args.bin_directory + "/" + string +
+                      " -U " + args.reads_directory + "/combined_reads.fastq -S " + string +
+                      ".sam --no-unal --quiet --reorder")
+
+        if args.mode == "paired":
+            os.system("bowtie2 -t --threads " + str(args.num_threads) + " -x " + args.bin_directory + "/" + string +
+                      " -1 " + args.reads_directory + "/combined_reads_1.fastq -2 " + args.reads_directory +
+                      "/combined_reads_2.fastq -U " + args.reads_directory + "/combined_reads_unpaired.fastq -S " +
+                      string + ".sam --no-unal --quiet --reorder")
 
         os.system("samtools view -bS -o " + string + ".bam " + string + ".sam")
         os.system("samtools sort -@ " + args.num_threads + " -o " + string + ".bam.sorted " + string + ".bam")
@@ -212,9 +281,9 @@ else:
         out.write(i.split(".")[0] + ",")
     out.write("\n")
 
-print("")
-print("total number of reads in the provided fastq file: " + str(numReads))
-print("")
+# print("")
+# print("total number of reads in the provided fastq file: " + str(numReads))
+# print("")
 
 for i in CovDictCombined.keys():
     bin = i
