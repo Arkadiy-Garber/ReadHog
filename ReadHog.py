@@ -111,7 +111,7 @@ os.system("bowtie2 -t --threads " + str(args.num_threads) + " -x " + args.bin_di
 print("Running SAMtools...")
 os.system("samtools view -bS -o combined_contigs.bam combined_contigs.sam")
 print("sorting...")
-os.system("samtools sort --threads 16 -o combined_contigs.bam.sorted combined_contigs.bam")
+os.system("samtools sort -@ " + args.num_threads + " -o combined_contigs.bam.sorted combined_contigs.bam")
 print("indexing...")
 os.system("samtools index -b combined_contigs.bam.sorted combined_contigs.bam.sorted.bai")
 print("summarizing results...")
@@ -152,7 +152,7 @@ for i in bins:
           "-U " + args.reads_directory + "/combined_reads.fastq" + " "
           "-S " + i + ".sam --no-unal --quiet --reorder")
         os.system("samtools view -bS -o " + i + ".bam " + i + ".sam")
-        os.system("samtools sort --threads 16 -o " + i + ".bam.sorted " + i + ".bam")
+        os.system("samtools sort -@ " + args.num_threads + " -o " + i + ".bam.sorted " + i + ".bam")
         os.system("samtools index -b " + i + ".bam.sorted " + i + ".bam.sorted.bai")
         os.system("samtools idxstats " + i + ".bam.sorted >> " + i + ".samtools.idxstats.out")
         idx = open(i + ".samtools.idxstats.out")
@@ -189,7 +189,7 @@ else:
                   + args.reads_directory + "/combined_reads.fastq" + " -S " + string + ".sam --no-unal --quiet --reorder")
 
         os.system("samtools view -bS -o " + string + ".bam " + string + ".sam")
-        os.system("samtools sort --threads 16 -o " + string + ".bam.sorted " + string + ".bam")
+        os.system("samtools sort -@ " + args.num_threads + " -o " + string + ".bam.sorted " + string + ".bam")
         os.system("samtools index -b " + string + ".bam.sorted " + string + ".bam.sorted.bai")
         os.system("samtools idxstats " + string + ".bam.sorted >> " + string + ".samtools.idxstats.out")
         idx = open(string + ".samtools.idxstats.out")
@@ -205,9 +205,9 @@ else:
 print("writing final file...")
 out = open(args.output_csv, "w")
 if args.bin_comparisons == "NA":
-    out.write("bin" + "," + "reads_mapped_when_mapped_together" + "," + "reads_mapped_when_mapped_separately" + "\n")
+    out.write("bin" + "," + "read_proportion_when_mapped_together" + "," + "read_proportion_when_mapped_separately" + "\n")
 else:
-    out.write("bin" + "," + "reads_mapped_when_mapped_together" + "," + "reads_mapped_when_mapped_separately" + ",")
+    out.write("bin" + "," + "read_proportion_when_mapped_together" + "," + "read_proportion_when_mapped_separately" + ",")
     for i in CovDictComp.keys():
         out.write(i.split(".")[0] + ",")
     out.write("\n")
