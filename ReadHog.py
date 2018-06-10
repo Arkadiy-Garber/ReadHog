@@ -28,10 +28,10 @@ parser.add_argument('-output_csv', help="basename for output file with read mapp
 parser.add_argument('-bin_comparisons', help="tab-delimited file for which combination of bins to map reads to "
                                              "(optional)", default="NA")
 parser.add_argument('-num_threads', help="the number of threads to use (default = 1)", default=1)
-parser.add_argument('-mode', help="paired (if you are providing folder with paired-end reads) or single (if your folder"
-                                  " has only single-end reads (default = single). If you are providing a folder with "
-                                  "paired-end reads, all the forward read files must end with either _1.fq or _1.fastq"
-                                  "and all the reverse end files must end with _2.fq of _2.fastq. All other files that"
+parser.add_argument('-mode', help="paired (if you are providing a directory with paired-end reads) or single (if your folder"
+                                  " has only single-end reads (default = single). If you are providing a directory with "
+                                  "paired-end reads, all forward-end read file names must end with either _1.fq or _1.fastq; "
+                                  " all reverse-end file names must end with _2.fq of _2.fastq. All other files in the reads directory that "
                                   "do not end with _1.fq, _1.fastq, _2.fq, or _2.fastq will be assumed to be unpaired "
                                   "reads", default="single")
 
@@ -93,7 +93,7 @@ if args.mode == "paired":
     reads = sorted(os.listdir(args.reads_directory))
     for i in reads:
         ext = lastItem(i.split("_"))
-        if re.findall(r'_1', ext) and i != "combined_reads_1.fastq":
+        if re.findall(r'1', ext) and i != "combined_reads_1.fastq":
             readFile = open(args.reads_directory + "/" + i, "r")
             for line in readFile:
                 outfile1.write(line)
@@ -103,7 +103,7 @@ if args.mode == "paired":
     reads = sorted(os.listdir(args.reads_directory))
     for i in reads:
         ext = lastItem(i.split("_"))
-        if re.findall(r'_2', ext) and i != "combined_reads_1.fastq" and i != "combined_reads_2.fastq":
+        if re.findall(r'2', ext) and i != "combined_reads_1.fastq" and i != "combined_reads_2.fastq":
             readFile = open(args.reads_directory + "/" + i, "r")
             for line in readFile:
                 outfile2.write(line)
@@ -113,7 +113,7 @@ if args.mode == "paired":
     reads = os.listdir(args.reads_directory)
     for i in reads:
         ext = lastItem(i.split("_"))
-        if not re.findall(r'_1', ext) and not re.findall(r'_2', ext) and i != "combined_reads_1.fastq" and \
+        if not re.findall(r'1', ext) and not re.findall(r'2', ext) and i != "combined_reads_1.fastq" and \
                         i != "combined_reads_2.fastq" and i != "combined_reads_unpaired.fastq":
             readFile = open(args.reads_directory + "/" + i, "r")
             for line in readFile:
@@ -311,19 +311,19 @@ for i in CovDictCombined.keys():
     print("")
 
 
-os.system("mkdir BiasMap-auxilary_files")
-os.system("mv " + args.reads_directory + "/combined_reads.fastq BiasMap-auxilary_files")
-os.system("mv " + args.bin_directory + "/combined_contigs.fasta* BiasMap-auxilary_files")
+os.system("mkdir ReadHog-auxilary_files")
+os.system("mv " + args.reads_directory + "/combined_reads.fastq ReadHog-auxilary_files")
+os.system("mv " + args.bin_directory + "/combined_contigs.fasta* ReadHog-auxilary_files")
 if args.bin_comparisons != "NA":
-    os.system("mv " + args.bin_directory + "/bin_comparison* BiasMap-auxilary_files")
+    os.system("mv " + args.bin_directory + "/bin_comparison* ReadHog-auxilary_files")
 for i in bins:
     ext = lastItem(i.split("."))
     if ext == args.bin_ext:
-        os.system("mv " + args.bin_directory + "/" + i + ".* BiasMap-auxilary_files")
-        os.system("mv " + i + ".bam BiasMap-auxilary_files")
-        os.system("mv " + i + ".sam BiasMap-auxilary_files")
-        os.system("mv " + i + ".samtools.idxstats.out BiasMap-auxilary_files")
-        os.system("mv " + i + ".bam.sorted* BiasMap-auxilary_files")
+        os.system("mv " + args.bin_directory + "/" + i + ".* ReadHog-auxilary_files")
+        os.system("mv " + i + ".bam ReadHog-auxilary_files")
+        os.system("mv " + i + ".sam ReadHog-auxilary_files")
+        os.system("mv " + i + ".samtools.idxstats.out ReadHog-auxilary_files")
+        os.system("mv " + i + ".bam.sorted* ReadHog-auxilary_files")
 
 
-print("Thank you for using BiasMAP!")
+print("Thank you for using ReadHog!")
