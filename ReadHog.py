@@ -157,7 +157,7 @@ if args.mode == "paired":
     os.system("bowtie2 -t --threads " + str(args.num_threads) + " -x " + args.bin_directory +
               "/combined_contigs.fasta -1 " + args.reads_directory + "/combined_reads_1.fastq -2 " +
               args.reads_directory + "/combined_reads_2.fastq -U " + args.reads_directory +
-              "/combined_reads_unpaired.fastq -S combined_contigs.sam --no-unal --quiet --reorder")
+              "/combined_reads_unpaired.fastq -S combined_contigs.sam --no-unal --reorder")
 
 
 print("Running SAMtools...")
