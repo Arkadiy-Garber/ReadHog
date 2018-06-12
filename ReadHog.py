@@ -74,9 +74,9 @@ def fasta(fasta_file):
     Dict[header] = seq
     return Dict
 
-print("Concatanating reads...")
 
 if args.mode == "single":
+    print("Concatenating reads: single mode")
     outfile = open(args.reads_directory + "/combined_reads.fastq", "w")
     reads = os.listdir(args.reads_directory)
     for i in reads:
@@ -89,11 +89,15 @@ if args.mode == "single":
 
 
 if args.mode == "paired":
+    print("Concatenating reads: paired mode...")
+    print("processing forward reads...")
     outfile1 = open(args.reads_directory + "/combined_reads_1.fastq", "w")
     reads = sorted(os.listdir(args.reads_directory))
     for i in reads:
         ext = lastItem(i.split("_"))
-        if re.findall(r'1', ext) and i != "combined_reads_1.fastq":
+        extension = lastItem(i.split("."))
+        if re.findall(r'1', ext) and extension == args.reads_ext and i != "combined_reads_1.fastq":
+            print("---" + i)
             readFile = open(args.reads_directory + "/" + i, "r")
             for line in readFile:
                 outfile1.write(line)
@@ -101,9 +105,12 @@ if args.mode == "paired":
 
     outfile2 = open(args.reads_directory + "/combined_reads_2.fastq", "w")
     reads = sorted(os.listdir(args.reads_directory))
+    print("processing reverse reads...")
     for i in reads:
         ext = lastItem(i.split("_"))
-        if re.findall(r'2', ext) and i != "combined_reads_1.fastq" and i != "combined_reads_2.fastq":
+        extension = lastItem(i.split("."))
+        if re.findall(r'2', ext) and extension == args.reads_ext and i != "combined_reads_1.fastq" and i != "combined_reads_2.fastq":
+            print("---" + i)
             readFile = open(args.reads_directory + "/" + i, "r")
             for line in readFile:
                 outfile2.write(line)
@@ -111,15 +118,17 @@ if args.mode == "paired":
 
     outfile = open(args.reads_directory + "/combined_reads_unpaired.fastq", "w")
     reads = os.listdir(args.reads_directory)
+    print("processing unpaired reads...")
     for i in reads:
         ext = lastItem(i.split("_"))
-        if not re.findall(r'1', ext) and not re.findall(r'2', ext) and i != "combined_reads_1.fastq" and \
+        extension = lastItem(i.split("."))
+        if not re.findall(r'1', ext) and extension == args.reads_ext and not re.findall(r'2', ext) and i != "combined_reads_1.fastq" and \
                         i != "combined_reads_2.fastq" and i != "combined_reads_unpaired.fastq":
+            print("---" + i)
             readFile = open(args.reads_directory + "/" + i, "r")
             for line in readFile:
                 outfile.write(line)
     outfile.close()
-
 
 
 # numReads = 0
@@ -157,7 +166,7 @@ if args.mode == "paired":
     os.system("bowtie2 -t --threads " + str(args.num_threads) + " -x " + args.bin_directory +
               "/combined_contigs.fasta -1 " + args.reads_directory + "/combined_reads_1.fastq -2 " +
               args.reads_directory + "/combined_reads_2.fastq -U " + args.reads_directory +
-              "/combined_reads_unpaired.fastq -S combined_contigs.sam --no-unal --reorder")
+              "/combined_reads_unpaired.fastq -S combined_contigs.sam --no-unal --quiet --reorder")
 
 
 print("Running SAMtools...")
